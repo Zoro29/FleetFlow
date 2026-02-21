@@ -16,5 +16,5 @@ export async function login({ email, password }) {
   const ok = await bcrypt.compare(password, user.password_hash || '');
   if (!ok) throw { status: 401, message: 'Invalid credentials' };
   const token = sign({ user_id: user.id, role: user.role });
-  return { token };
+  return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role } };
 }

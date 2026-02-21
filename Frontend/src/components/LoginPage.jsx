@@ -15,8 +15,16 @@ const LoginPage = () => {
         e.preventDefault();
         setError(null);
         try {
-            await login(email, password);
-            navigate('/dashboard');
+            const body = await login(email, password);
+            const role = body && body.user && body.user.role;
+            if (role && role !== 'Fleet Manager') {
+                if (role === 'Dispatcher') navigate('/role/dispatcher');
+                else if (role === 'Safety Officer') navigate('/role/safety');
+                else if (role === 'Financial Analyst') navigate('/role/finance');
+                else navigate('/dashboard');
+            } else {
+                navigate('/dashboard');
+            }
         } catch (err) {
             setError(err.message || 'Login failed');
         }

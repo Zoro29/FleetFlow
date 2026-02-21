@@ -71,7 +71,7 @@ export const AppProvider = ({ children }) => {
             throw new Error(err.message || 'Login failed');
         }
         const body = await res.json();
-        setAuth({ token: body.token, user: null });
+        setAuth({ token: body.token, user: body.user || null });
         return body;
     }
 
@@ -95,6 +95,15 @@ export const AppProvider = ({ children }) => {
 
     function authHeaders() {
         return auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {};
+    }
+
+    function userRole() {
+        return auth && auth.user ? auth.user.role : null;
+    }
+
+    function hasRole(...roles) {
+        const r = userRole();
+        return !!(r && roles.includes(r));
     }
 
     // Vehicle actions
@@ -195,7 +204,7 @@ export const AppProvider = ({ children }) => {
             addMaintenance,
             addExpense,
             // auth
-            auth, login, register, logout, authHeaders,
+            auth, login, register, logout, authHeaders, userRole, hasRole,
         }}>
             {children}
         </AppContext.Provider>

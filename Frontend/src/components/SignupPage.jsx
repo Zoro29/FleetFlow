@@ -1,25 +1,41 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Truck, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import './AuthPages.css';
 import { useAppContext } from '../context/AppContext';
 
 const SignupPage = () => {
     const { register, login } = useAppContext();
+    const navigate = useNavigate();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [role, setRole] = useState('Dispatcher');
+
+    const roleDescriptions = {
+        'Fleet Manager': 'Oversee vehicle health, asset lifecycle, and scheduling.',
+        'Dispatcher': 'Create trips, assign drivers, and validate cargo loads.',
+        'Safety Officer': 'Monitor driver compliance, license expirations, and safety scores.',
+        'Financial Analyst': 'Audit fuel spend, maintenance ROI, and operational costs.',
+    };
     const [error, setError] = useState(null);
 
     const handleSignup = async (e) => {
         e.preventDefault();
         setError(null);
         try {
-            await register({ name, email, password, role: 'Dispatcher' });
+            await register({ name, email, password, role });
             // auto-login
-            await login(email, password);
-            // navigate to dashboard
-            window.location.href = '/dashboard';
+            const body = await login(email, password);
+            const r = body && body.user && body.user.role;
+            if (r && r !== 'Fleet Manager') {
+                if (r === 'Dispatcher') navigate('/role/dispatcher');
+                else if (r === 'Safety Officer') navigate('/role/safety');
+                else if (r === 'Financial Analyst') navigate('/role/finance');
+                else navigate('/dashboard');
+            } else {
+                navigate('/dashboard');
+            }
         } catch (err) {
             setError(err.message || 'Signup failed');
         }
@@ -64,6 +80,19 @@ const SignupPage = () => {
                             <Lock className="input-icon" size={18} />
                             <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" id="password" placeholder="••••••••" required />
                         </div>
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="role">User Type</label>
+                        <div className="input-wrapper">
+                            <select id="role" value={role} onChange={(e) => setRole(e.target.value)} className="select-input">
+                                <option value="Fleet Manager">Fleet Manager</option>
+                                <option value="Dispatcher">Dispatcher</option>
+                                <option value="Safety Officer">Safety Officer</option>
+                                <option value="Financial Analyst">Financial Analyst</option>
+                            </select>
+                        </div>
+                        <small className="role-desc">{roleDescriptions[role]}</small>
                     </div>
 
                     {error && <div className="auth-error">{error}</div>}

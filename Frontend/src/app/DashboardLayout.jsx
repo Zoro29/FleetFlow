@@ -5,6 +5,7 @@ import {
     Users, BarChart2, LogOut, Menu, ChevronRight,
     Navigation, Shield, TrendingUp
 } from 'lucide-react';
+import { useAppContext } from '../context/AppContext';
 import './DashboardLayout.css';
 
 const coreNavItems = [
@@ -18,9 +19,9 @@ const coreNavItems = [
 ];
 
 const roleNavItems = [
-    { to: '/role/dispatcher', icon: <Navigation size={18} />, label: 'Dispatcher Console', accent: '#2563EB' },
-    { to: '/role/safety', icon: <Shield size={18} />, label: 'Safety Officer', accent: '#10B981' },
-    { to: '/role/finance', icon: <TrendingUp size={18} />, label: 'Financial Analyst', accent: '#8B5CF6' },
+    { to: '/role/dispatcher', role: 'Dispatcher', icon: <Navigation size={18} />, label: 'Dispatcher Console', accent: '#2563EB' },
+    { to: '/role/safety', role: 'Safety Officer', icon: <Shield size={18} />, label: 'Safety Officer', accent: '#10B981' },
+    { to: '/role/finance', role: 'Financial Analyst', icon: <TrendingUp size={18} />, label: 'Financial Analyst', accent: '#8B5CF6' },
 ];
 
 const allNavItems = [...coreNavItems, ...roleNavItems];
@@ -29,8 +30,19 @@ const DashboardLayout = ({ children }) => {
     const [collapsed, setCollapsed] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
+    const { auth, userRole } = useAppContext();
 
-    const currentPage = allNavItems.find(n => location.pathname.startsWith(n.to));
+    const role = userRole && userRole();
+
+    const visibleCoreItems = role === 'Fleet Manager' ? coreNavItems : [];
+    const visibleRoleItems = role === 'Fleet Manager'
+        ? roleNavItems
+        : role ? roleNavItems.filter(r => r.role === role) : [];
+
+    const allVisible = [...visibleCoreItems, ...visibleRoleItems];
+    const currentPage = allVisible.find(n => location.pathname.startsWith(n.to));
+
+    const initials = auth && auth.user && auth.user.name ? auth.user.name.split(' ').map(n => n[0]).slice(0,2).join('') : 'U';
 
     return (
         <div className={`app-shell ${collapsed ? 'collapsed' : ''}`}>
@@ -48,8 +60,8 @@ const DashboardLayout = ({ children }) => {
 
                 <nav className="sidebar-nav">
                     {/* Core pages */}
-                    {!collapsed && <div className="nav-section-label">Fleet Management</div>}
-                    {coreNavItems.map((item) => (
+                    {!collapsed && visibleCoreItems.length > 0 && <div className="nav-section-label">Fleet Management</div>}
+                    {visibleCoreItems.map((item) => (
                         <NavLink
                             key={item.to}
                             to={item.to}
@@ -62,11 +74,11 @@ const DashboardLayout = ({ children }) => {
                     ))}
 
                     {/* Divider */}
-                    <div className="nav-divider" />
-                    {!collapsed && <div className="nav-section-label">Role Consoles</div>}
+                    {visibleCoreItems.length > 0 && visibleRoleItems.length > 0 && <div className="nav-divider" />}
+                    {!collapsed && visibleRoleItems.length > 0 && <div className="nav-section-label">Role Consoles</div>}
 
                     {/* Role pages */}
-                    {roleNavItems.map((item) => (
+                    {visibleRoleItems.map((item) => (
                         <NavLink
                             key={item.to}
                             to={item.to}
@@ -93,8 +105,8 @@ const DashboardLayout = ({ children }) => {
                         <h1 className="page-title">{currentPage?.label || 'Dashboard'}</h1>
                     </div>
                     <div className="topbar-right">
-                        <div className="role-pill">Fleet Manager</div>
-                        <div className="user-avatar">FM</div>
+                        <div className="role-pill">{userRole && userRole() ? userRole() : 'Guest'}</div>
+                        <div className="user-avatar">{initials}</div>
                     </div>
                 </header>
                 <main className="app-content">

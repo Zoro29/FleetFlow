@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Simple curl script to exercise auth and protected vehicle creation
-BASE=http://localhost:3000/api
+BASE=http://localhost:3001/api
 
 # Register
 curl -s -X POST $BASE/auth/register -H "Content-Type: application/json" -d '{"name":"CLI Tester","email":"cli+1@fleet.local","password":"pass1234","role":"Dispatcher"}'

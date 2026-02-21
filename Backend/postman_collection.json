@@ -12,7 +12,7 @@
           { "key": "Content-Type", "value": "application/json" }
         ],
         "body": { "mode": "raw", "raw": "{\"name\":\"Postman User\",\"email\":\"postman@fleet.local\",\"password\":\"pass1234\",\"role\":\"Dispatcher\"}" },
-        "url": { "raw": "http://localhost:3000/api/auth/register", "host": ["http://localhost:3000"], "path": ["api","auth","register"] }
+        "url": { "raw": "http://localhost:3001/api/auth/register", "host": ["http://localhost:3001"], "path": ["api","auth","register"] }
       }
     },
     {
@@ -23,7 +23,7 @@
           { "key": "Content-Type", "value": "application/json" }
         ],
         "body": { "mode": "raw", "raw": "{\"email\":\"postman@fleet.local\",\"password\":\"pass1234\"}" },
-        "url": { "raw": "http://localhost:3000/api/auth/login", "host": ["http://localhost:3000"], "path": ["api","auth","login"] }
+        "url": { "raw": "http://localhost:3001/api/auth/login", "host": ["http://localhost:3001"], "path": ["api","auth","login"] }
       }
     },
     {
@@ -35,7 +35,7 @@
           { "key": "Authorization", "value": "Bearer {{token}}" }
         ],
         "body": { "mode": "raw", "raw": "{\"name\":\"PM Truck\",\"license_plate\":\"PM-001\",\"max_capacity\":1200}" },
-        "url": { "raw": "http://localhost:3000/api/vehicles", "host": ["http://localhost:3000"], "path": ["api","vehicles"] }
+        "url": { "raw": "http://localhost:3001/api/vehicles", "host": ["http://localhost:3001"], "path": ["api","vehicles"] }
       }
     }
   ]

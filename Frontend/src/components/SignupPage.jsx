@@ -18,13 +18,22 @@ const SignupPage = () => {
         'Safety Officer': 'Monitor driver compliance, license expirations, and safety scores.',
         'Financial Analyst': 'Audit fuel spend, maintenance ROI, and operational costs.',
     };
+
+    // Map display roles to backend enum values (user_role type)
+    const roleApiMap = {
+        'Fleet Manager': 'Manager',
+        'Dispatcher': 'Dispatcher',
+        'Safety Officer': 'Safety',
+        'Financial Analyst': 'Finance',
+    };
     const [error, setError] = useState(null);
 
     const handleSignup = async (e) => {
         e.preventDefault();
         setError(null);
         try {
-            await register({ name, email, password, role });
+            const apiRole = roleApiMap[role] || 'Dispatcher';
+            await register({ name, email, password, role: apiRole });
             // auto-login
             const body = await login(email, password);
             const r = body && body.user && body.user.role;

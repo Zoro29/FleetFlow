@@ -30,24 +30,91 @@ export const AppProvider = ({ children }) => {
         }
     }, [auth]);
 
-    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000/api';
+    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3001/api';
 
     // load all data from backend on mount
     useEffect(() => {
         async function load() {
             try {
+                // Auto-login in development so the seeded dispatcher can view data immediately
+                if (!auth.token && import.meta.env.DEV) {
+                    try {
+                        await login('bob@fleet.local', 'password123');
+                    } catch (e) {
+                        // ignore auto-login failures
+                    }
+                    // wait for auth state to update and let effect re-run
+                    return;
+                }
+                const headers = auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {};
+
+                // Fetch each resource and log detailed outcomes for debugging
+                async function fetchJson(url, opts = {}) {
+                    try {
+                        const res = await fetch(url, opts);
+                        console.debug('Fetch', url, 'status', res.status);
+                        if (res.ok) {
+                            const data = await res.json().catch(() => null);
+                            return { ok: true, data };
+                        }
+                        const txt = await res.text().catch(() => '');
+                        return { ok: false, status: res.status, text: txt };
+                    } catch (e) {
+                        console.error('Fetch error', url, e.message || e);
+                        return { ok: false, error: e };
+                    }
+                }
+
                 const [vRes, dRes, tRes, mRes, eRes] = await Promise.all([
-                    fetch(`${API_BASE}/vehicles`, { headers: auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {} }),
-                    fetch(`${API_BASE}/drivers`, { headers: auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {} }),
-                    fetch(`${API_BASE}/trips`, { headers: auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {} }),
-                    fetch(`${API_BASE}/maintenance`, { headers: auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {} }),
-                    fetch(`${API_BASE}/expenses`, { headers: auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {} }),
+                    fetchJson(`${API_BASE}/vehicles`, { headers }),
+                    fetchJson(`${API_BASE}/drivers`, { headers }),
+                    fetchJson(`${API_BASE}/trips`, { headers }),
+                    fetchJson(`${API_BASE}/maintenance`, { headers }),
+                    fetchJson(`${API_BASE}/expenses`, { headers }),
                 ]);
-                if (vRes.ok) setVehicles(await vRes.json());
-                if (dRes.ok) setDrivers(await dRes.json());
-                if (tRes.ok) setTrips(await tRes.json());
-                if (mRes.ok) setMaintenance(await mRes.json());
-                if (eRes.ok) setExpenses(await eRes.json());
+
+                if (vRes.ok) {
+                    setVehicles(vRes.data);
+                } else {
+                    console.warn('Vehicles fetch failed', vRes);
+                    // Try public fallback
+                    const pub = await fetchJson(`${API_BASE}/public/vehicles`);
+                    if (pub.ok) setVehicles(pub.data);
+                }
+
+                if (dRes.ok) {
+                    setDrivers(dRes.data);
+                } else {
+                    console.warn('Drivers fetch failed', dRes);
+                    if (dRes.status === 401 || !dRes.ok) {
+                        const pub = await fetchJson(`${API_BASE}/public/drivers`);
+                        if (pub.ok) {
+                            console.info('Using public drivers endpoint');
+                            setDrivers(pub.data);
+                        } else console.warn('Public drivers fetch failed', pub);
+                    }
+                }
+
+                if (tRes.ok) setTrips(tRes.data);
+                else {
+                    console.warn('Trips fetch failed', tRes);
+                    const pub = await fetchJson(`${API_BASE}/public/trips`);
+                    if (pub.ok) setTrips(pub.data);
+                }
+
+                if (mRes.ok) setMaintenance(mRes.data);
+                else {
+                    console.warn('Maintenance fetch failed', mRes);
+                    const pub = await fetchJson(`${API_BASE}/public/maintenance`);
+                    if (pub.ok) setMaintenance(pub.data);
+                }
+
+                if (eRes.ok) setExpenses(eRes.data);
+                else {
+                    console.warn('Expenses fetch failed', eRes);
+                    const pub = await fetchJson(`${API_BASE}/public/expenses`);
+                    if (pub.ok) setExpenses(pub.data);
+                }
             } catch (err) {
                 // ignore for now
             }

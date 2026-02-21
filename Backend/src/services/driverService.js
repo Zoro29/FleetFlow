@@ -1,6 +1,6 @@
 import { findById, updateDriver, createDriver } from '../repositories/driversRepository.js';
 
-export function createNewDriver(payload) {
+export async function createNewDriver(payload) {
   const d = { ...payload, status: 'Available' };
   return createDriver(d);
 }
@@ -11,10 +11,10 @@ export function checkLicenseValid(driver) {
   return expiry >= new Date();
 }
 
-export function getDriver(id) {
+export async function getDriver(id) {
   return findById(id);
 }
 
-export function setDriverStatus(id, status) {
+export async function setDriverStatus(id, status) {
   return updateDriver(id, { status });
 }

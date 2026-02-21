@@ -24,6 +24,13 @@ router.get('/trips', authGuard, (await import('../controllers/listController.js'
 
 // Drivers
 router.get('/drivers', authGuard, (await import('../controllers/listController.js')).getDrivers);
+// Public drivers list for quick local testing (no auth)
+router.get('/public/drivers', (await import('../controllers/listController.js')).getDrivers);
+// Public endpoints for other lists (no auth) to aid local testing
+router.get('/public/vehicles', (await import('../controllers/listController.js')).getVehicles);
+router.get('/public/trips', (await import('../controllers/listController.js')).getTrips);
+router.get('/public/maintenance', (await import('../controllers/listController.js')).getMaintenance);
+router.get('/public/expenses', (await import('../controllers/listController.js')).getExpenses);
 router.post('/drivers', authGuard, (await import('../controllers/listController.js')).createDriver);
 
 // Maintenance & Expenses

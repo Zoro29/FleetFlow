@@ -188,6 +188,7 @@ FOR EACH ROW
 WHEN (NEW.status = 'Retired')
 EXECUTE FUNCTION prevent_retire_if_ontrip();
 
+
 -- Ready
 
 -- Example usage note (run as psql):

@@ -11,53 +11,72 @@ DECLARE
   trip_completed UUID; trip_dispatched UUID;
 BEGIN
   -- Users
+  -- Insert users idempotently (unique on email)
   INSERT INTO users(id,name,email,password_hash,role)
     VALUES (gen_random_uuid(),'Alice Manager','alice@fleet.local','seed_hash','Manager')
-    RETURNING id INTO u_manager;
+    ON CONFLICT (email) DO NOTHING;
+  SELECT id INTO u_manager FROM users WHERE email = 'alice@fleet.local';
+
   INSERT INTO users(id,name,email,password_hash,role)
     VALUES (gen_random_uuid(),'Bob Dispatcher','bob@fleet.local','seed_hash','Dispatcher')
-    RETURNING id INTO u_dispatcher;
+    ON CONFLICT (email) DO NOTHING;
+  SELECT id INTO u_dispatcher FROM users WHERE email = 'bob@fleet.local';
 
   -- Vehicles: 3 Available
+  -- Vehicles (idempotent on license_plate)
   INSERT INTO vehicles(id,name,license_plate,max_capacity,odometer,acquisition_cost,status)
-    VALUES (gen_random_uuid(),'Truck A','AAA-111',1000,10000,50000,'Available') RETURNING id INTO v_a1;
+    VALUES (gen_random_uuid(),'Truck A','AAA-111',1000,10000,50000,'Available') ON CONFLICT (license_plate) DO NOTHING;
+  SELECT id INTO v_a1 FROM vehicles WHERE license_plate = 'AAA-111';
+
   INSERT INTO vehicles(id,name,license_plate,max_capacity,odometer,acquisition_cost,status)
-    VALUES (gen_random_uuid(),'Truck B','BBB-222',800,5000,40000,'Available') RETURNING id INTO v_a2;
+    VALUES (gen_random_uuid(),'Truck B','BBB-222',800,5000,40000,'Available') ON CONFLICT (license_plate) DO NOTHING;
+  SELECT id INTO v_a2 FROM vehicles WHERE license_plate = 'BBB-222';
+
   INSERT INTO vehicles(id,name,license_plate,max_capacity,odometer,acquisition_cost,status)
-    VALUES (gen_random_uuid(),'Van C','CCC-333',500,2500,20000,'Available') RETURNING id INTO v_a3;
+    VALUES (gen_random_uuid(),'Van C','CCC-333',500,2500,20000,'Available') ON CONFLICT (license_plate) DO NOTHING;
+  SELECT id INTO v_a3 FROM vehicles WHERE license_plate = 'CCC-333';
 
   -- 1 InShop (will be set by maintenance trigger)
   INSERT INTO vehicles(id,name,license_plate,max_capacity,odometer,acquisition_cost,status)
-    VALUES (gen_random_uuid(),'Service Truck','SERV-001',1200,8000,60000,'Available') RETURNING id INTO v_inshop;
+    VALUES (gen_random_uuid(),'Service Truck','SERV-001',1200,8000,60000,'Available') ON CONFLICT (license_plate) DO NOTHING;
+  SELECT id INTO v_inshop FROM vehicles WHERE license_plate = 'SERV-001';
 
   -- 1 OnTrip (will be associated with a dispatched trip)
   INSERT INTO vehicles(id,name,license_plate,max_capacity,odometer,acquisition_cost,status)
-    VALUES (gen_random_uuid(),'Long Hauler','LONG-01',2000,150000,120000,'Available') RETURNING id INTO v_ontrip;
+    VALUES (gen_random_uuid(),'Long Hauler','LONG-01',2000,150000,120000,'Available') ON CONFLICT (license_plate) DO NOTHING;
+  SELECT id INTO v_ontrip FROM vehicles WHERE license_plate = 'LONG-01';
 
   -- Drivers
+  -- Drivers (idempotent on license_number)
   INSERT INTO drivers(id,name,license_number,license_category,license_expiry,safety_score,status)
-    VALUES (gen_random_uuid(),'Daniel Driver','D-1001','C', (CURRENT_DATE + INTERVAL '365 days')::date, 98.5, 'Available') RETURNING id INTO d_a1;
+    VALUES (gen_random_uuid(),'Daniel Driver','D-1001','C', (CURRENT_DATE + INTERVAL '365 days')::date, 98.5, 'Available') ON CONFLICT (license_number) DO NOTHING;
+  SELECT id INTO d_a1 FROM drivers WHERE license_number = 'D-1001';
+
   INSERT INTO drivers(id,name,license_number,license_category,license_expiry,safety_score,status)
-    VALUES (gen_random_uuid(),'Eve Driver','E-1002','B', (CURRENT_DATE + INTERVAL '180 days')::date, 95.0, 'Available') RETURNING id INTO d_a2;
+    VALUES (gen_random_uuid(),'Eve Driver','E-1002','B', (CURRENT_DATE + INTERVAL '180 days')::date, 95.0, 'Available') ON CONFLICT (license_number) DO NOTHING;
+  SELECT id INTO d_a2 FROM drivers WHERE license_number = 'E-1002';
 
   -- Suspended
   INSERT INTO drivers(id,name,license_number,license_category,license_expiry,safety_score,status)
-    VALUES (gen_random_uuid(),'Frank Suspended','F-9000','C', (CURRENT_DATE + INTERVAL '30 days')::date, 60.0, 'Suspended') RETURNING id INTO d_suspended;
+    VALUES (gen_random_uuid(),'Frank Suspended','F-9000','C', (CURRENT_DATE + INTERVAL '30 days')::date, 60.0, 'Suspended') ON CONFLICT (license_number) DO NOTHING;
+  SELECT id INTO d_suspended FROM drivers WHERE license_number = 'F-9000';
 
   -- OnTrip driver (will be linked to dispatched trip)
   INSERT INTO drivers(id,name,license_number,license_category,license_expiry,safety_score,status)
-    VALUES (gen_random_uuid(),'Grace OnTrip','G-7000','C', (CURRENT_DATE + INTERVAL '365 days')::date, 99.0, 'Available') RETURNING id INTO d_ontrip;
+    VALUES (gen_random_uuid(),'Grace OnTrip','G-7000','C', (CURRENT_DATE + INTERVAL '365 days')::date, 99.0, 'Available') ON CONFLICT (license_number) DO NOTHING;
+  SELECT id INTO d_ontrip FROM drivers WHERE license_number = 'G-7000';
 
   -- Trips
   -- Completed trip using v_a2 and d_a2
+  -- Completed trip using v_a2 and d_a2
   INSERT INTO trips(id,vehicle_id,driver_id,cargo_weight,origin,destination,status,start_odometer,end_odometer,revenue)
-    VALUES (gen_random_uuid(), v_a2, d_a2, 400, 'Warehouse X', 'Client Y', 'Completed', 4800, 5100, 1500.00)
-    RETURNING id INTO trip_completed;
+    VALUES (gen_random_uuid(), v_a2, d_a2, 400, 'Warehouse X', 'Client Y', 'Completed', 4800, 5100, 1500.00);
+  SELECT id INTO trip_completed FROM trips WHERE vehicle_id = v_a2 AND driver_id = d_a2 AND origin='Warehouse X' AND destination='Client Y' AND status='Completed' LIMIT 1;
 
   -- Dispatched trip using v_ontrip and d_ontrip (sets vehicle/driver to OnTrip in real app)
   INSERT INTO trips(id,vehicle_id,driver_id,cargo_weight,origin,destination,status,start_odometer,revenue)
-    VALUES (gen_random_uuid(), v_ontrip, d_ontrip, 1200, 'Depot A', 'Depot B', 'Dispatched', 150000, 3000.00)
-    RETURNING id INTO trip_dispatched;
+    VALUES (gen_random_uuid(), v_ontrip, d_ontrip, 1200, 'Depot A', 'Depot B', 'Dispatched', 150000, 3000.00);
+  SELECT id INTO trip_dispatched FROM trips WHERE vehicle_id = v_ontrip AND driver_id = d_ontrip AND origin='Depot A' AND destination='Depot B' AND status='Dispatched' LIMIT 1;
 
   -- Update vehicle and driver statuses to reflect dispatched trip
   UPDATE vehicles SET status = 'OnTrip' WHERE id = v_ontrip;
@@ -86,3 +105,9 @@ $$ LANGUAGE plpgsql;
 -- SELECT COUNT(*) FROM trips WHERE status='Dispatched';
 
 -- To apply: psql -d fleetflow -f db/seed.sql
+
+select * from vehicles;
+select * from drivers;
+select * from users;
+;
+S

@@ -12,12 +12,24 @@ router.post('/auth/register', authCtrl.register);
 router.post('/auth/login', authCtrl.login);
 
 // Vehicles
-router.post('/vehicles', authGuard, roleGuard('Manager', 'Dispatcher'), vehicleCtrl.createVehicle);
-router.post('/vehicles/:id/retire', authGuard, roleGuard('Manager'), vehicleCtrl.retireVehicle);
+router.post('/vehicles', authGuard, roleGuard('Fleet Manager', 'Dispatcher'), vehicleCtrl.createVehicle);
+router.post('/vehicles/:id/retire', authGuard, roleGuard('Fleet Manager'), vehicleCtrl.retireVehicle);
 router.get('/vehicles/:id', authGuard, vehicleCtrl.getVehicle);
+router.get('/vehicles', authGuard, (await import('../controllers/listController.js')).getVehicles);
 
 // Trips
 router.post('/trips', authGuard, roleGuard('Dispatcher'), tripCtrl.createTrip);
 router.post('/trips/:trip_id/complete', authGuard, roleGuard('Dispatcher', 'Driver'), tripCtrl.completeTrip);
+router.get('/trips', authGuard, (await import('../controllers/listController.js')).getTrips);
+
+// Drivers
+router.get('/drivers', authGuard, (await import('../controllers/listController.js')).getDrivers);
+router.post('/drivers', authGuard, (await import('../controllers/listController.js')).createDriver);
+
+// Maintenance & Expenses
+router.get('/maintenance', authGuard, (await import('../controllers/listController.js')).getMaintenance);
+router.post('/maintenance', authGuard, (await import('../controllers/listController.js')).createMaintenance);
+router.get('/expenses', authGuard, (await import('../controllers/listController.js')).getExpenses);
+router.post('/expenses', authGuard, (await import('../controllers/listController.js')).createExpense);
 
 export default router;

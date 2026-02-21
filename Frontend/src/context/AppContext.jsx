@@ -2,39 +2,11 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AppContext = createContext();
 
-const initialVehicles = [
-    { id: 'V001', name: 'Truck Alpha', model: 'Tata 407', plate: 'MH-12-AB-1234', type: 'Truck', capacity: 1000, odometer: 48520, status: 'Available' },
-    { id: 'V002', name: 'Van-05', model: 'Force Traveller', plate: 'MH-01-BC-5678', type: 'Van', capacity: 500, odometer: 21300, status: 'On Trip' },
-    { id: 'V003', name: 'Bike Runner', model: 'TVS Apache', plate: 'MH-04-CD-9012', type: 'Bike', capacity: 50, odometer: 8900, status: 'Available' },
-    { id: 'V004', name: 'Van Bravo', model: 'Mahindra Supro', plate: 'MH-14-EF-3456', type: 'Van', capacity: 400, odometer: 33200, status: 'In Shop' },
-    { id: 'V005', name: 'Heavy Hauler', model: 'Ashok Leyland', plate: 'MH-06-GH-7890', type: 'Truck', capacity: 2000, odometer: 91400, status: 'Available' },
-];
-
-const initialDrivers = [
-    { id: 'D001', name: 'Alex Kumar', license: 'DL-MH-2019-001', category: 'Van', expiry: '2026-08-15', status: 'On Duty', trips: 42, safetyScore: 94 },
-    { id: 'D002', name: 'Priya Sharma', license: 'DL-MH-2020-002', category: 'Truck', expiry: '2025-12-01', status: 'On Duty', trips: 87, safetyScore: 98 },
-    { id: 'D003', name: 'Raj Mehta', license: 'DL-MH-2018-003', category: 'Bike', expiry: '2024-05-10', status: 'Suspended', trips: 23, safetyScore: 71 },
-    { id: 'D004', name: 'Sunita Patel', license: 'DL-MH-2021-004', category: 'Van', expiry: '2027-03-22', status: 'Off Duty', trips: 61, safetyScore: 91 },
-    { id: 'D005', name: 'Marco Fernandes', license: 'DL-MH-2022-005', category: 'Truck', expiry: '2028-11-30', status: 'On Duty', trips: 15, safetyScore: 88 },
-];
-
-const initialTrips = [
-    { id: 'T001', vehicleId: 'V002', driverId: 'D001', origin: 'Mumbai', destination: 'Pune', cargoWeight: 450, status: 'Dispatched', date: '2026-02-21', notes: 'Electronics shipment' },
-    { id: 'T002', vehicleId: 'V001', driverId: 'D002', origin: 'Nagpur', destination: 'Aurangabad', cargoWeight: 900, status: 'Completed', date: '2026-02-18', notes: 'Construction material' },
-    { id: 'T003', vehicleId: 'V003', driverId: 'D003', origin: 'Thane', destination: 'Navi Mumbai', cargoWeight: 30, status: 'Cancelled', date: '2026-02-17', notes: 'Documents' },
-    { id: 'T004', vehicleId: 'V005', driverId: 'D005', origin: 'Nashik', destination: 'Mumbai', cargoWeight: 1800, status: 'Draft', date: '2026-02-22', notes: 'Agricultural produce' },
-];
-
-const initialMaintenance = [
-    { id: 'M001', vehicleId: 'V004', serviceType: 'Engine Overhaul', date: '2026-02-19', cost: 18500, notes: 'Full engine rebuild' },
-    { id: 'M002', vehicleId: 'V001', serviceType: 'Oil Change', date: '2026-02-15', cost: 800, notes: 'Routine 5000km service' },
-];
-
-const initialExpenses = [
-    { id: 'E001', vehicleId: 'V002', tripId: 'T001', liters: 42, costPerLiter: 94.5, totalCost: 3969, date: '2026-02-21', type: 'Fuel' },
-    { id: 'E002', vehicleId: 'V001', tripId: 'T002', liters: 80, costPerLiter: 95.2, totalCost: 7616, date: '2026-02-18', type: 'Fuel' },
-    { id: 'E003', vehicleId: 'V004', tripId: null, liters: 0, costPerLiter: 0, totalCost: 18500, date: '2026-02-19', type: 'Maintenance' },
-];
+const initialVehicles = [];
+const initialDrivers = [];
+const initialTrips = [];
+const initialMaintenance = [];
+const initialExpenses = [];
 
 export const AppProvider = ({ children }) => {
     const [vehicles, setVehicles] = useState(initialVehicles);
@@ -59,6 +31,29 @@ export const AppProvider = ({ children }) => {
     }, [auth]);
 
     const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000/api';
+
+    // load all data from backend on mount
+    useEffect(() => {
+        async function load() {
+            try {
+                const [vRes, dRes, tRes, mRes, eRes] = await Promise.all([
+                    fetch(`${API_BASE}/vehicles`, { headers: auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {} }),
+                    fetch(`${API_BASE}/drivers`, { headers: auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {} }),
+                    fetch(`${API_BASE}/trips`, { headers: auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {} }),
+                    fetch(`${API_BASE}/maintenance`, { headers: auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {} }),
+                    fetch(`${API_BASE}/expenses`, { headers: auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {} }),
+                ]);
+                if (vRes.ok) setVehicles(await vRes.json());
+                if (dRes.ok) setDrivers(await dRes.json());
+                if (tRes.ok) setTrips(await tRes.json());
+                if (mRes.ok) setMaintenance(await mRes.json());
+                if (eRes.ok) setExpenses(await eRes.json());
+            } catch (err) {
+                // ignore for now
+            }
+        }
+        load();
+    }, [API_BASE, auth && auth.token]);
 
     async function login(email, password) {
         const res = await fetch(`${API_BASE}/auth/login`, {
@@ -107,9 +102,24 @@ export const AppProvider = ({ children }) => {
     }
 
     // Vehicle actions
-    const addVehicle = (vehicle) => {
-        const id = `V${String(vehicles.length + 1).padStart(3, '0')}`;
-        setVehicles(prev => [...prev, { ...vehicle, id, status: 'Available' }]);
+    const addVehicle = async (vehicle) => {
+        const payload = {
+            name: vehicle.name,
+            model: vehicle.model,
+            license_plate: vehicle.plate,
+            type: vehicle.type,
+            max_capacity: vehicle.capacity,
+            odometer: vehicle.odometer || 0,
+        };
+        const res = await fetch(`${API_BASE}/vehicles`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {}) }, body: JSON.stringify(payload) });
+        if (res.ok) {
+            const body = await res.json();
+            // map to frontend shape
+            const item = { id: body.id, name: body.name, model: body.model || '', plate: body.license_plate || '', type: body.type || '', capacity: body.max_capacity || body.capacity || 0, odometer: body.odometer || 0, status: body.status || 'Available' };
+            setVehicles(prev => [...prev, item]);
+        } else {
+            throw new Error('Failed to create vehicle');
+        }
     };
 
     const updateVehicleStatus = (vehicleId, status) => {
@@ -121,9 +131,19 @@ export const AppProvider = ({ children }) => {
     };
 
     // Driver actions
-    const addDriver = (driver) => {
-        const id = `D${String(drivers.length + 1).padStart(3, '0')}`;
-        setDrivers(prev => [...prev, { ...driver, id, trips: 0, safetyScore: 100 }]);
+    const addDriver = async (driver) => {
+        // create locally via API if endpoint exists; for now just add locally
+        const payload = { name: driver.name, license: driver.license, category: driver.category, expiry: driver.expiry, status: driver.status || 'Off Duty' };
+        const res = await fetch(`${API_BASE}/drivers`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {}) }, body: JSON.stringify(payload) });
+        if (res.ok) {
+            const body = await res.json();
+            const item = { id: body.id, name: body.name, license: body.license, category: body.category, expiry: body.expiry, status: body.status, trips: body.trips || 0, safetyScore: body.safetyScore || 0 };
+            setDrivers(prev => [...prev, item]);
+        } else {
+            // fallback: add locally
+            const id = `D${String(drivers.length + 1).padStart(3, '0')}`;
+            setDrivers(prev => [...prev, { ...driver, id, trips: 0, safetyScore: 100 }]);
+        }
     };
 
     const updateDriverStatus = (driverId, status) => {
@@ -137,18 +157,24 @@ export const AppProvider = ({ children }) => {
     };
 
     // Trip actions
-    const addTrip = (trip) => {
-        const vehicle = vehicles.find(v => v.id === trip.vehicleId);
-        if (!vehicle) return { success: false, error: 'Vehicle not found' };
-        if (trip.cargoWeight > vehicle.capacity) {
-            return { success: false, error: `Cargo weight ${trip.cargoWeight}kg exceeds vehicle capacity ${vehicle.capacity}kg.` };
+    const addTrip = async (trip) => {
+        const payload = {
+            vehicle_id: trip.vehicleId,
+            driver_id: trip.driverId,
+            cargo_weight: trip.cargoWeight,
+            origin: trip.origin,
+            destination: trip.destination,
+            notes: trip.notes || '',
+            date: trip.date || new Date().toISOString(),
+        };
+        const res = await fetch(`${API_BASE}/trips`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {}) }, body: JSON.stringify(payload) });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            return { success: false, error: err.message || 'Create trip failed' };
         }
-        const driver = drivers.find(d => d.id === trip.driverId);
-        if (driver && !isDriverEligible(driver)) {
-            return { success: false, error: 'Driver license is expired or driver is suspended.' };
-        }
-        const id = `T${String(trips.length + 1).padStart(3, '0')}`;
-        setTrips(prev => [...prev, { ...trip, id, status: 'Draft' }]);
+        const body = await res.json();
+        const item = { id: body.id, vehicleId: body.vehicle_id, driverId: body.driver_id, origin: body.origin, destination: body.destination, cargoWeight: body.cargo_weight, status: body.status, date: body.date || body.created_at, notes: body.notes || '' };
+        setTrips(prev => [...prev, item]);
         return { success: true };
     };
 
@@ -168,21 +194,31 @@ export const AppProvider = ({ children }) => {
     };
 
     // Maintenance actions
-    const addMaintenance = (record) => {
-        const id = `M${String(maintenance.length + 1).padStart(3, '0')}`;
-        setMaintenance(prev => [...prev, { ...record, id }]);
-        // Auto-set vehicle to In Shop
-        updateVehicleStatus(record.vehicleId, 'In Shop');
-        // Add to expenses
-        const expId = `E${String(expenses.length + 1).padStart(3, '0')}`;
-        setExpenses(prev => [...prev, { id: expId, vehicleId: record.vehicleId, tripId: null, liters: 0, costPerLiter: 0, totalCost: record.cost, date: record.date, type: 'Maintenance' }]);
+    const addMaintenance = async (record) => {
+        const payload = { vehicle_id: record.vehicleId, serviceType: record.serviceType || record.serviceType, date: record.date, cost: record.cost, notes: record.notes };
+        const res = await fetch(`${API_BASE}/maintenance`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {}) }, body: JSON.stringify(payload) });
+        if (res.ok) {
+            const body = await res.json();
+            setMaintenance(prev => [...prev, body]);
+            // update vehicle status locally
+            updateVehicleStatus(record.vehicleId, 'In Shop');
+            // add expense record
+            const expRes = await fetch(`${API_BASE}/expenses`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {}) }, body: JSON.stringify({ vehicle_id: record.vehicleId, trip_id: null, liters: 0, cost_per_liter: 0, total_cost: record.cost, date: record.date, type: 'Maintenance' }) });
+            if (expRes.ok) {
+                const expBody = await expRes.json();
+                setExpenses(prev => [...prev, expBody]);
+            }
+        }
     };
 
     // Expense actions
-    const addExpense = (expense) => {
-        const id = `E${String(expenses.length + 1).padStart(3, '0')}`;
-        const totalCost = expense.liters * expense.costPerLiter;
-        setExpenses(prev => [...prev, { ...expense, id, totalCost, type: 'Fuel' }]);
+    const addExpense = async (expense) => {
+        const payload = { vehicle_id: expense.vehicleId, trip_id: expense.tripId || null, liters: expense.liters || 0, cost_per_liter: expense.costPerLiter || 0, total_cost: (expense.liters || 0) * (expense.costPerLiter || 0), date: expense.date, type: expense.type || 'Fuel' };
+        const res = await fetch(`${API_BASE}/expenses`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {}) }, body: JSON.stringify(payload) });
+        if (res.ok) {
+            const body = await res.json();
+            setExpenses(prev => [...prev, body]);
+        }
     };
 
     // Derived stats

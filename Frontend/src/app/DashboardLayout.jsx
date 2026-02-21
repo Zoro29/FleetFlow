@@ -35,8 +35,9 @@ const DashboardLayout = ({ children }) => {
     const role = userRole && userRole();
 
     const visibleCoreItems = role === 'Fleet Manager' ? coreNavItems : [];
+    // Fleet Managers should NOT see role-specific consoles; only core pages
     const visibleRoleItems = role === 'Fleet Manager'
-        ? roleNavItems
+        ? []
         : role ? roleNavItems.filter(r => r.role === role) : [];
 
     const allVisible = [...visibleCoreItems, ...visibleRoleItems];

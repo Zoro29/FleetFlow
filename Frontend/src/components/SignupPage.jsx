@@ -1,13 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Truck, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import './AuthPages.css';
+import { useAppContext } from '../context/AppContext';
 
 const SignupPage = () => {
-    const handleSignup = (e) => {
+    const { register, login } = useAppContext();
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState(null);
+
+    const handleSignup = async (e) => {
         e.preventDefault();
-        // Simulate signup for now
-        alert("Signup functionality will go here.");
+        setError(null);
+        try {
+            await register({ name, email, password, role: 'Dispatcher' });
+            // auto-login
+            await login(email, password);
+            // navigate to dashboard
+            window.location.href = '/dashboard';
+        } catch (err) {
+            setError(err.message || 'Signup failed');
+        }
     };
 
     return (
@@ -31,7 +46,7 @@ const SignupPage = () => {
                         <label htmlFor="name">Full Name</label>
                         <div className="input-wrapper">
                             <User className="input-icon" size={18} />
-                            <input type="text" id="name" placeholder="John Doe" required />
+                            <input value={name} onChange={(e) => setName(e.target.value)} type="text" id="name" placeholder="John Doe" required />
                         </div>
                     </div>
 
@@ -39,7 +54,7 @@ const SignupPage = () => {
                         <label htmlFor="email">Email Address</label>
                         <div className="input-wrapper">
                             <Mail className="input-icon" size={18} />
-                            <input type="email" id="email" placeholder="manager@fleet.com" required />
+                            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" id="email" placeholder="manager@fleet.com" required />
                         </div>
                     </div>
 
@@ -47,9 +62,11 @@ const SignupPage = () => {
                         <label htmlFor="password">Password</label>
                         <div className="input-wrapper">
                             <Lock className="input-icon" size={18} />
-                            <input type="password" id="password" placeholder="••••••••" required />
+                            <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" id="password" placeholder="••••••••" required />
                         </div>
                     </div>
+
+                    {error && <div className="auth-error">{error}</div>}
 
                     <button type="submit" className="btn btn-primary auth-submit-btn">
                         Create Account <ArrowRight size={18} />

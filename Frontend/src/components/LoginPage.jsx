@@ -1,13 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Truck, Mail, Lock, ArrowRight } from 'lucide-react';
 import './AuthPages.css';
+import { useAppContext } from '../context/AppContext';
 
 const LoginPage = () => {
     const navigate = useNavigate();
-    const handleLogin = (e) => {
+    const { login } = useAppContext();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState(null);
+
+    const handleLogin = async (e) => {
         e.preventDefault();
-        navigate('/dashboard');
+        setError(null);
+        try {
+            await login(email, password);
+            navigate('/dashboard');
+        } catch (err) {
+            setError(err.message || 'Login failed');
+        }
     };
 
     return (
@@ -31,7 +43,7 @@ const LoginPage = () => {
                         <label htmlFor="email">Email Address</label>
                         <div className="input-wrapper">
                             <Mail className="input-icon" size={18} />
-                            <input type="email" id="email" placeholder="manager@fleet.com" required />
+                            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" id="email" placeholder="manager@fleet.com" required />
                         </div>
                     </div>
 
@@ -42,9 +54,11 @@ const LoginPage = () => {
                         </div>
                         <div className="input-wrapper">
                             <Lock className="input-icon" size={18} />
-                            <input type="password" id="password" placeholder="••••••••" required />
+                            <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" id="password" placeholder="••••••••" required />
                         </div>
                     </div>
+
+                    {error && <div className="auth-error">{error}</div>}
 
                     <button type="submit" className="btn btn-primary auth-submit-btn">
                         Log In <ArrowRight size={18} />

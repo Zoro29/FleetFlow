@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AppContext = createContext();
 
@@ -42,6 +42,60 @@ export const AppProvider = ({ children }) => {
     const [trips, setTrips] = useState(initialTrips);
     const [maintenance, setMaintenance] = useState(initialMaintenance);
     const [expenses, setExpenses] = useState(initialExpenses);
+    const [auth, setAuth] = useState(() => {
+        const token = localStorage.getItem('ff_token');
+        const user = token ? JSON.parse(localStorage.getItem('ff_user') || 'null') : null;
+        return { token, user };
+    });
+
+    useEffect(() => {
+        if (auth.token) {
+            localStorage.setItem('ff_token', auth.token);
+            if (auth.user) localStorage.setItem('ff_user', JSON.stringify(auth.user));
+        } else {
+            localStorage.removeItem('ff_token');
+            localStorage.removeItem('ff_user');
+        }
+    }, [auth]);
+
+    const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3000/api';
+
+    async function login(email, password) {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || 'Login failed');
+        }
+        const body = await res.json();
+        setAuth({ token: body.token, user: null });
+        return body;
+    }
+
+    async function register({ name, email, password, role }) {
+        const res = await fetch(`${API_BASE}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password, role }),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || 'Registration failed');
+        }
+        const body = await res.json();
+        return body;
+    }
+
+    function logout() {
+        setAuth({ token: null, user: null });
+    }
+
+    function authHeaders() {
+        return auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {};
+    }
 
     // Vehicle actions
     const addVehicle = (vehicle) => {
@@ -140,6 +194,8 @@ export const AppProvider = ({ children }) => {
             addTrip, updateTripStatus,
             addMaintenance,
             addExpense,
+            // auth
+            auth, login, register, logout, authHeaders,
         }}>
             {children}
         </AppContext.Provider>

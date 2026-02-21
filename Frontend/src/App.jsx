@@ -18,6 +18,11 @@ import ExpenseLogs from './pages/ExpenseLogs';
 import DriverProfiles from './pages/DriverProfiles';
 import Analytics from './pages/Analytics';
 
+// Role-Specific Pages
+import DispatcherPage from './pages/DispatcherPage';
+import SafetyOfficerPage from './pages/SafetyOfficerPage';
+import FinancialAnalystPage from './pages/FinancialAnalystPage';
+
 function App() {
   return (
     <Router>
@@ -28,7 +33,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
-          {/* App Pages */}
+          {/* Core App Pages */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/vehicles" element={<VehicleRegistry />} />
           <Route path="/trips" element={<TripDispatcher />} />
@@ -36,6 +41,11 @@ function App() {
           <Route path="/expenses" element={<ExpenseLogs />} />
           <Route path="/drivers" element={<DriverProfiles />} />
           <Route path="/analytics" element={<Analytics />} />
+
+          {/* Role-Specific Consoles */}
+          <Route path="/role/dispatcher" element={<DispatcherPage />} />
+          <Route path="/role/safety" element={<SafetyOfficerPage />} />
+          <Route path="/role/finance" element={<FinancialAnalystPage />} />
         </Routes>
       </AppProvider>
     </Router>

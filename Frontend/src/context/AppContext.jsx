@@ -137,6 +137,17 @@ export const AppProvider = ({ children }) => {
         return body;
     }
 
+    async function checkEmail(email) {
+        const res = await fetch(`${API_BASE}/auth/check-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+        });
+        if (!res.ok) return false;
+        const body = await res.json();
+        return body.registered === true;
+    }
+
     async function register({ name, email, password, role }) {
         const res = await fetch(`${API_BASE}/auth/register`, {
             method: 'POST',
@@ -307,7 +318,7 @@ export const AppProvider = ({ children }) => {
             addMaintenance,
             addExpense,
             // auth
-            auth, login, register, logout, authHeaders, userRole, hasRole,
+            auth, login, register, checkEmail, logout, authHeaders, userRole, hasRole,
         }}>
             {children}
         </AppContext.Provider>

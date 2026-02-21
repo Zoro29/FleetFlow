@@ -22,3 +22,14 @@ export async function login(req, res, next) {
     next(err);
   }
 }
+
+export async function checkEmail(req, res, next) {
+  try {
+    const { email } = req.body || {};
+    if (!email) return res.status(400).json({ message: 'email required' });
+    const result = await authService.checkEmail(email);
+    res.json({ registered: result });
+  } catch (err) {
+    next(err);
+  }
+}

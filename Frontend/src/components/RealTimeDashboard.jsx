@@ -31,7 +31,7 @@ const RealTimeDashboard = () => {
     }, []);
 
     return (
-        <section className="dashboard-section">
+        <section className="dashboard-section" id="product">
             <div className="container">
 
                 <div className="dashboard-header">

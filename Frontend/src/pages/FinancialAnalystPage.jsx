@@ -8,31 +8,36 @@ import { useAppContext } from '../context/AppContext';
 import DashboardLayout from '../app/DashboardLayout';
 
 const COLORS = ['#2563EB', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
-const mockRevenue = { V001: 45000, V002: 28000, V003: 5000, V004: 0, V005: 80000 };
-const mockKm = { V001: 320, V002: 160, V003: 45, V004: 0, V005: 580 };
 
 const FinancialAnalystPage = () => {
     const { vehicles, expenses, maintenance, trips } = useAppContext();
 
+    // Aggregate revenue and distance from trips
+    const completedTrips = trips.filter(t => t.status === 'Completed');
+    const totalRevenue = completedTrips.reduce((s, t) => s + (t.revenue || 0), 0);
+    const totalDistance = completedTrips.reduce((s, t) => s + (t.distanceKm || 0), 0);
+
     const totalFuel = expenses.filter(e => e.type === 'Fuel').reduce((s, e) => s + e.totalCost, 0);
     const totalMaint = expenses.filter(e => e.type === 'Maintenance').reduce((s, e) => s + e.totalCost, 0);
-    const totalRevenue = Object.values(mockRevenue).reduce((a, b) => a + b, 0);
-    const netProfit = totalRevenue - totalFuel - totalMaint;
+    const totalCost = totalFuel + totalMaint;
+    const netProfit = totalRevenue - totalCost;
 
-    // Per-vehicle financial breakdown
+    // Per-vehicle financial breakdown (real revenue and distance)
     const vehicleFinancials = vehicles.map(v => {
+        const vTrips = completedTrips.filter(t => t.vehicleId === v.id);
+        const revenue = vTrips.reduce((s, t) => s + (t.revenue || 0), 0);
+        const km = vTrips.reduce((s, t) => s + (t.distanceKm || 0), 0);
         const fuelCost = expenses.filter(e => e.vehicleId === v.id && e.type === 'Fuel').reduce((s, e) => s + e.totalCost, 0);
         const maintCost = expenses.filter(e => e.vehicleId === v.id && e.type === 'Maintenance').reduce((s, e) => s + e.totalCost, 0);
-        const revenue = mockRevenue[v.id] || 0;
-        const km = mockKm[v.id] || 0;
         const liters = expenses.filter(e => e.vehicleId === v.id && e.type === 'Fuel').reduce((s, e) => s + e.liters, 0);
         const fuelEff = liters > 0 ? +(km / liters).toFixed(2) : 0;
-        const totalCost = fuelCost + maintCost;
+        const vehicleTotalCost = fuelCost + maintCost;
+        const profit = revenue - vehicleTotalCost;
         const acquisitionCost = 500000;
-        const roi = acquisitionCost > 0 ? +(((revenue - totalCost) / acquisitionCost) * 100).toFixed(1) : 0;
-        const costPerKm = km > 0 ? +(totalCost / km).toFixed(2) : 0;
-        return { id: v.id, name: v.name, type: v.type, fuelCost, maintCost, totalCost, revenue, profit: revenue - totalCost, roi, fuelEff, costPerKm };
-    });
+        const roi = acquisitionCost > 0 ? +(((profit) / acquisitionCost) * 100).toFixed(1) : 0;
+        const costPerKm = km > 0 ? +(vehicleTotalCost / km).toFixed(2) : 0;
+        return { id: v.id, name: v.name, type: v.type, fuelCost, maintCost, totalCost: vehicleTotalCost, revenue, profit, roi, fuelEff, costPerKm, trips: vTrips.length, distanceKm: km };
+    }).filter(v => v.revenue > 0 || v.totalCost > 0);
 
     // Bar chart data
     const barData = vehicleFinancials.filter(v => v.totalCost > 0 || v.revenue > 0).map(v => ({
@@ -45,16 +50,29 @@ const FinancialAnalystPage = () => {
         { name: 'Maintenance', value: totalMaint },
     ];
 
-    // Monthly trend (mock)
-    const trendData = [
-        { month: 'Oct', fuel: 5200, maint: 2000, revenue: 42000 },
-        { month: 'Nov', fuel: 6100, maint: 8500, revenue: 48000 },
-        { month: 'Dec', fuel: 4800, maint: 1200, revenue: 39000 },
-        { month: 'Jan', fuel: 7200, maint: 3000, revenue: 55000 },
-        { month: 'Feb', fuel: totalFuel, maint: totalMaint, revenue: totalRevenue },
-    ];
+    // Monthly trend from real trips (group by month of created_at)
+    const trendMap = new Map();
+    completedTrips.forEach(t => {
+        const d = t.date ? new Date(t.date) : null;
+        if (!d || Number.isNaN(d.getTime())) return;
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (!trendMap.has(key)) trendMap.set(key, { month: key, fuel: 0, maint: 0, revenue: 0 });
+        const bucket = trendMap.get(key);
+        bucket.revenue += t.revenue || 0;
+    });
+    expenses.forEach(e => {
+        const d = e.date ? new Date(e.date) : null;
+        if (!d || Number.isNaN(d.getTime())) return;
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (!trendMap.has(key)) trendMap.set(key, { month: key, fuel: 0, maint: 0, revenue: 0 });
+        const bucket = trendMap.get(key);
+        if (e.type === 'Fuel') bucket.fuel += e.totalCost;
+        if (e.type === 'Maintenance') bucket.maint += e.totalCost;
+    });
+    const trendData = Array.from(trendMap.values()).sort((a, b) => a.month.localeCompare(b.month));
 
     const exportCSV = (data, name) => {
+        if (!data || data.length === 0) return; // nothing to export
         const headers = Object.keys(data[0]).join(',');
         const rows = data.map(r => Object.values(r).join(','));
         const blob = new Blob([[headers, ...rows].join('\n')], { type: 'text/csv' });
@@ -96,6 +114,13 @@ const FinancialAnalystPage = () => {
                         <div style={{ background: '#FEF3C7', borderRadius: '50%', padding: 10 }}><Wrench size={20} color="var(--warning)" /></div>
                     </div>
                     <div className="kpi-sub">{maintenance.length} service records</div>
+                </div>
+                <div className="kpi-card" style={{ borderTop: '3px solid var(--accent)' }}>
+                    <div className="kpi-icon-wrap">
+                        <div><div className="kpi-label">Distance Covered</div><div className="kpi-value" style={{ fontSize: 22 }}>{Math.round(totalDistance).toLocaleString()} km</div></div>
+                        <div style={{ background: '#EEF2FF', borderRadius: '50%', padding: 10 }}><DollarSign size={20} color="var(--accent)" /></div>
+                    </div>
+                    <div className="kpi-sub">Completed trip distance</div>
                 </div>
                 <div className="kpi-card" style={{ borderTop: `3px solid ${netProfit >= 0 ? 'var(--success)' : 'var(--error)'}` }}>
                     <div className="kpi-icon-wrap">
@@ -181,7 +206,7 @@ const FinancialAnalystPage = () => {
                     <thead>
                         <tr>
                             <th>Vehicle</th><th>Revenue (₹)</th><th>Fuel Cost (₹)</th><th>Maint Cost (₹)</th>
-                            <th>Total Cost (₹)</th><th>Net Profit (₹)</th><th>ROI %</th><th>Fuel Eff.</th><th>Cost/km</th>
+                            <th>Total Cost (₹)</th><th>Net Profit (₹)</th><th>ROI %</th><th>Trips</th><th>Distance (km)</th><th>Fuel Eff.</th><th>Cost/km</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -200,6 +225,8 @@ const FinancialAnalystPage = () => {
                                         {v.roi}%
                                     </span>
                                 </td>
+                                <td>{v.trips}</td>
+                                <td>{v.distanceKm > 0 ? Math.round(v.distanceKm).toLocaleString() : '—'}</td>
                                 <td>{v.fuelEff > 0 ? `${v.fuelEff} km/L` : '—'}</td>
                                 <td>{v.costPerKm > 0 ? `₹${v.costPerKm}/km` : '—'}</td>
                             </tr>

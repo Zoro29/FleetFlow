@@ -93,7 +93,13 @@ export async function getTrips(req, res, next) {
       cargoWeight: t.cargo_weight || t.cargoWeight || 0,
       status: t.status || 'Draft',
       date: t.date || t.created_at || null,
-      notes: t.notes || ''
+      notes: t.notes || '',
+      revenue: Number(t.revenue || 0),
+      startOdometer: t.start_odometer ?? t.startOdometer ?? null,
+      endOdometer: t.end_odometer ?? t.endOdometer ?? null,
+      distanceKm: t.start_odometer != null && t.end_odometer != null
+        ? Math.max(0, Number(t.end_odometer) - Number(t.start_odometer))
+        : 0,
     }));
     res.json(mapped);
   } catch (err) { next(err); }
@@ -104,10 +110,26 @@ export async function getMaintenance(req, res, next) {
     const pg = getPool();
     if (pg) {
       const result = await pg.query('SELECT * FROM maintenance_logs ORDER BY service_date');
-      res.json(result.rows);
+      const mapped = result.rows.map(m => ({
+        id: m.id,
+        vehicleId: m.vehicle_id,
+        serviceType: m.service_type || m.description || '',
+        date: m.service_date,
+        cost: Number(m.cost || 0),
+        notes: m.notes || m.description || ''
+      }));
+      res.json(mapped);
     } else {
       const raw = maintRepo.allMaintenance();
-      res.json(raw);
+      const mapped = raw.map(m => ({
+        id: m.id,
+        vehicleId: m.vehicleId || m.vehicle_id,
+        serviceType: m.serviceType || m.description || '',
+        date: m.date || m.service_date,
+        cost: Number(m.cost || 0),
+        notes: m.notes || m.description || ''
+      }));
+      res.json(mapped);
     }
   } catch (err) { next(err); }
 }
@@ -116,27 +138,131 @@ export async function getExpenses(req, res, next) {
   try {
     const pg = getPool();
     if (pg) {
-      const result = await pg.query('SELECT * FROM fuel_logs ORDER BY date');
+      // Combine fuel logs and maintenance logs into a unified expense feed
+      const result = await pg.query(`
+        SELECT id,
+               vehicle_id      AS "vehicleId",
+               trip_id         AS "tripId",
+               'Fuel'::text    AS type,
+               liters,
+               CASE WHEN liters > 0 THEN cost / liters ELSE 0 END AS "costPerLiter",
+               cost            AS "totalCost",
+               date::text      AS date,
+               created_at
+        FROM fuel_logs
+        UNION ALL
+        SELECT id,
+               vehicle_id      AS "vehicleId",
+               NULL::uuid      AS "tripId",
+               'Maintenance'::text AS type,
+               0::numeric      AS liters,
+               0::numeric      AS "costPerLiter",
+               cost            AS "totalCost",
+               service_date::text AS date,
+               created_at
+        FROM maintenance_logs
+        ORDER BY date, created_at
+      `);
       res.json(result.rows);
     } else {
       const raw = expRepo.allExpenses();
-      res.json(raw);
+      const maint = maintRepo.allMaintenance();
+      const mappedExpenses = raw.map(e => ({
+        id: e.id,
+        vehicleId: e.vehicleId || e.vehicle_id,
+        tripId: e.tripId || e.trip_id || null,
+        type: e.type || 'Fuel',
+        liters: Number(e.liters || 0),
+        costPerLiter: Number(e.costPerLiter || e.cost_per_liter || 0),
+        totalCost: Number(e.totalCost || e.total_cost || 0),
+        date: e.date
+      }));
+      const mappedMaint = maint.map(m => ({
+        id: m.id,
+        vehicleId: m.vehicleId || m.vehicle_id,
+        tripId: null,
+        type: 'Maintenance',
+        liters: 0,
+        costPerLiter: 0,
+        totalCost: Number(m.cost || 0),
+        date: m.date || m.service_date
+      }));
+      res.json([...mappedExpenses, ...mappedMaint]);
     }
   } catch (err) { next(err); }
 }
 
-export function createMaintenance(req, res, next) {
+export async function createMaintenance(req, res, next) {
   try {
+    const pg = getPool();
     const body = req.body;
-    const rec = maintRepo.createMaintenance(body);
-    res.status(201).json(rec);
+    if (pg) {
+      const text = `
+        INSERT INTO maintenance_logs (vehicle_id, description, cost, service_date)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *
+      `;
+      const values = [
+        body.vehicle_id || body.vehicleId,
+        body.serviceType || body.description || '',
+        body.cost,
+        body.date
+      ];
+      const result = await pg.query(text, values);
+      const m = result.rows[0];
+      const mapped = {
+        id: m.id,
+        vehicleId: m.vehicle_id,
+        serviceType: m.service_type || m.description || body.serviceType || '',
+        date: m.service_date,
+        cost: Number(m.cost || 0),
+        notes: body.notes || ''
+      };
+      res.status(201).json(mapped);
+    } else {
+      const rec = maintRepo.createMaintenance(body);
+      res.status(201).json(rec);
+    }
   } catch (err) { next(err); }
 }
 
-export function createExpense(req, res, next) {
+export async function createExpense(req, res, next) {
   try {
+    const pg = getPool();
     const body = req.body;
-    const rec = expRepo.createExpense(body);
-    res.status(201).json(rec);
+    if (pg) {
+      // Only fuel expenses are stored in fuel_logs; maintenance is derived from maintenance_logs
+      const liters = Number(body.liters || 0);
+      const explicitTotal = body.total_cost || body.totalCost || body.cost;
+      const cost = explicitTotal != null ? Number(explicitTotal) : liters * Number(body.cost_per_liter || body.costPerLiter || 0);
+      const text = `
+        INSERT INTO fuel_logs (vehicle_id, trip_id, liters, cost, date)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING *
+      `;
+      const values = [
+        body.vehicle_id || body.vehicleId,
+        body.trip_id || body.tripId || null,
+        liters,
+        cost,
+        body.date
+      ];
+      const result = await pg.query(text, values);
+      const f = result.rows[0];
+      const mapped = {
+        id: f.id,
+        vehicleId: f.vehicle_id,
+        tripId: f.trip_id,
+        type: 'Fuel',
+        liters: Number(f.liters || 0),
+        costPerLiter: Number(f.liters || 0) > 0 ? Number(f.cost) / Number(f.liters) : 0,
+        totalCost: Number(f.cost || 0),
+        date: f.date
+      };
+      res.status(201).json(mapped);
+    } else {
+      const rec = expRepo.createExpense(body);
+      res.status(201).json(rec);
+    }
   } catch (err) { next(err); }
 }

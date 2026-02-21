@@ -27,7 +27,14 @@ const LoginPage = () => {
         setError(null);
         try {
             const body = await login(email, password);
-            const role = body && body.user && body.user.role;
+            const apiRole = body && body.user && body.user.role;
+
+            // Normalize backend enum roles to the display roles used for routing
+            let role = apiRole;
+            if (apiRole === 'Manager') role = 'Fleet Manager';
+            else if (apiRole === 'Safety') role = 'Safety Officer';
+            else if (apiRole === 'Finance') role = 'Financial Analyst';
+
             if (role && role !== 'Fleet Manager') {
                 if (role === 'Dispatcher') navigate('/role/dispatcher');
                 else if (role === 'Safety Officer') navigate('/role/safety');

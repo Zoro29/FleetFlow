@@ -12,11 +12,17 @@ const COLORS = ['#2563EB', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 const Analytics = () => {
     const { vehicles, expenses, trips } = useAppContext();
 
-    // Fuel efficiency per vehicle (mock km data)
-    const kmPerTrip = { V001: 320, V002: 160, V003: 45, V004: 0, V005: 580 };
+    // Fuel efficiency per vehicle (mock km data keyed by vehicle name to work with DB IDs)
+    const kmPerVehicle = {
+        'Truck A': 320,
+        'Truck B': 160,
+        'Van C': 45,
+        'Service Truck': 0,
+        'Long Hauler': 580,
+    };
     const fuelEfficiency = vehicles.map(v => {
         const fuelLiters = expenses.filter(e => e.vehicleId === v.id && e.type === 'Fuel').reduce((s, e) => s + e.liters, 0);
-        const km = kmPerTrip[v.id] || 0;
+        const km = kmPerVehicle[v.name] || 0;
         return { name: v.name.split(' ')[0], kmPerL: fuelLiters > 0 ? +(km / fuelLiters).toFixed(2) : 0, liters: fuelLiters };
     }).filter(v => v.liters > 0);
 
@@ -29,10 +35,16 @@ const Analytics = () => {
     ];
 
     // Vehicle ROI (mock revenue per vehicle)
-    const mockRevenue = { V001: 45000, V002: 28000, V003: 5000, V004: 0, V005: 80000 };
+    const mockRevenue = {
+        'Truck A': 45000,
+        'Truck B': 28000,
+        'Van C': 5000,
+        'Service Truck': 0,
+        'Long Hauler': 80000,
+    };
     const roiData = vehicles.map(v => {
         const costs = expenses.filter(e => e.vehicleId === v.id).reduce((s, e) => s + e.totalCost, 0);
-        const revenue = mockRevenue[v.id] || 0;
+        const revenue = mockRevenue[v.name] || 0;
         const acquisitionCost = 500000;
         const roi = acquisitionCost > 0 ? +(((revenue - costs) / acquisitionCost) * 100).toFixed(1) : 0;
         return { id: v.id, name: v.name, revenue, costs, profit: revenue - costs, roi };
@@ -40,6 +52,7 @@ const Analytics = () => {
 
     // CSV Export
     const exportCSV = (data, name) => {
+        if (!data || data.length === 0) return; // nothing to export
         const headers = Object.keys(data[0]).join(',');
         const rows = data.map(r => Object.values(r).join(','));
         const csv = [headers, ...rows].join('\n');

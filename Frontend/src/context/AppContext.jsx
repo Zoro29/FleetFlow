@@ -171,7 +171,13 @@ export const AppProvider = ({ children }) => {
     }
 
     function userRole() {
-        return auth && auth.user ? auth.user.role : null;
+        const r = auth && auth.user ? auth.user.role : null;
+        if (!r) return null;
+        // Normalize backend enum roles to the display roles used across the app
+        if (r === 'Manager') return 'Fleet Manager';
+        if (r === 'Safety') return 'Safety Officer';
+        if (r === 'Finance') return 'Financial Analyst';
+        return r;
     }
 
     function hasRole(...roles) {
@@ -279,13 +285,19 @@ export const AppProvider = ({ children }) => {
             const body = await res.json();
             setMaintenance(prev => [...prev, body]);
             // update vehicle status locally
-            updateVehicleStatus(record.vehicleId, 'In Shop');
-            // add expense record
-            const expRes = await fetch(`${API_BASE}/expenses`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(auth && auth.token ? { Authorization: `Bearer ${auth.token}` } : {}) }, body: JSON.stringify({ vehicle_id: record.vehicleId, trip_id: null, liters: 0, cost_per_liter: 0, total_cost: record.cost, date: record.date, type: 'Maintenance' }) });
-            if (expRes.ok) {
-                const expBody = await expRes.json();
-                setExpenses(prev => [...prev, expBody]);
-            }
+            updateVehicleStatus(body.vehicleId || record.vehicleId, 'In Shop');
+            // also reflect maintenance cost in the expenses feed immediately
+            const maintExpense = {
+                id: `maint-${body.id}`,
+                vehicleId: body.vehicleId || record.vehicleId,
+                tripId: null,
+                type: 'Maintenance',
+                liters: 0,
+                costPerLiter: 0,
+                totalCost: body.cost || record.cost,
+                date: body.date || record.date,
+            };
+            setExpenses(prev => [...prev, maintExpense]);
         }
     };
 

@@ -36,7 +36,14 @@ const SignupPage = () => {
             await register({ name, email, password, role: apiRole });
             // auto-login
             const body = await login(email, password);
-            const r = body && body.user && body.user.role;
+            const apiRoleOut = body && body.user && body.user.role;
+
+            // Normalize backend enum roles back to display roles used for routing
+            let r = apiRoleOut;
+            if (apiRoleOut === 'Manager') r = 'Fleet Manager';
+            else if (apiRoleOut === 'Safety') r = 'Safety Officer';
+            else if (apiRoleOut === 'Finance') r = 'Financial Analyst';
+
             if (r && r !== 'Fleet Manager') {
                 if (r === 'Dispatcher') navigate('/role/dispatcher');
                 else if (r === 'Safety Officer') navigate('/role/safety');

@@ -1,47 +1,53 @@
-FleetFlow Backend scaffold
+FleetFlow Backend Scaffold
 
-This is a minimal, layered Node/Express scaffold demonstrating the requested architecture and core flows:
+This is my minimal, layered Node/Express scaffold demonstrating the required architecture and core flows:
 
-- controllers -> services -> repositories -> inMemoryDB
-- auth via JWT
-- role-based guards
-- trip creation/completion implemented inside a simulated transaction (locking by id)
+controllers → services → repositories → inMemoryDB
 
-Quick start:
+authentication using JWT
 
-1. cd Backend
-2. npm install
-3. npm run dev
+role-based guards
 
-Notes:
-- This scaffold uses an in-memory store (not production ready). Replace repositories with a real DB adapter.
-- The trip transaction uses a simple lock wrapper to simulate SELECT ... FOR UPDATE semantics. Use DB transactions in production.
+trip creation and completion implemented inside a simulated transaction (locking by id)
 
-Database setup
-----------------
-This project includes a PostgreSQL schema at `db/schema.sql` implementing the production-ready schema:
+Quick Start
 
-- ENUM types for roles and state machines
-- FK constraints, CHECK constraints and indexes
-- Views for derived metrics and triggers for auto state changes
+cd Backend
 
-To create a local database and apply the schema using `psql` (Postgres must be installed):
+npm install
 
-```bash
+npm run dev
+
+Notes
+
+This scaffold uses an in-memory store and is not production-ready. I plan to replace the repositories with a real database adapter.
+
+The trip transaction uses a simple lock wrapper to simulate SELECT ... FOR UPDATE semantics. In production, I would use real database transactions.
+
+Database Setup
+
+I’ve included a PostgreSQL schema at db/schema.sql that implements a production-ready schema with:
+
+ENUM types for roles and state machines
+
+Foreign key constraints, CHECK constraints, and indexes
+
+Views for derived metrics and triggers for automatic state changes
+
+To create a local database and apply the schema using psql (Postgres must be installed):
+
 # create database (run as a superuser or postgres user)
 createdb fleetflow
 
 # apply schema
 psql -d fleetflow -f db/schema.sql
-```
 
-If you prefer a Node-based migration runner I can add a small script using `pg` to run the SQL automatically—ask and I'll add it.
+If needed, I can also add a small Node-based migration runner using pg to execute the SQL automatically.
 
-Seeding demo data
------------------
-After the schema applies you can populate demo data (vehicles, drivers, trips, maintenance, fuel) using the provided `db/seed.sql`:
+Seeding Demo Data
 
-```bash
+After applying the schema, I can populate demo data (vehicles, drivers, trips, maintenance, fuel) using db/seed.sql:
+
 # run seed (assumes `fleetflow` DB exists and schema applied)
 psql -d fleetflow -f db/seed.sql
 
@@ -50,36 +56,44 @@ psql -d fleetflow -f db/seed.sql
 SELECT count(*) FROM vehicles;
 SELECT * FROM vehicle_operational_cost LIMIT 5;
 SELECT * FROM trip_fuel_efficiency LIMIT 5;
-```
 
-If you want, I can also add a small `scripts/seed.js` using `pg` to run the schema+seed automatically from Node.
+If needed, I can also add a scripts/seed.js file using pg to run the schema and seed automatically from Node.
 
-Docker (recommended)
---------------------
-If you have Docker, this is the easiest, most reproducible option. A `docker-compose.yml` is included at the project root (`Backend/docker-compose.yml`). It will:
+Docker (Recommended)
 
-- Start Postgres 16
-- Create the `fleetflow` database
-- Auto-run `db/schema.sql` at container init
+If I have Docker installed, this is the easiest and most reproducible setup. I’ve included a docker-compose.yml file at the project root (Backend/docker-compose.yml) that:
 
-Quick start with Docker:
+Starts PostgreSQL 16
 
-```bash
+Creates the fleetflow database
+
+Automatically runs db/schema.sql during container initialization
+
+Quick Start with Docker
 # start DB (runs in foreground)
 docker compose up
 
-# in another terminal, install node deps and run the app
+In another terminal:
+
 cd Backend
 npm install
 npm run dev
-```
 
-To tear down and remove DB volume:
+To tear down and remove the database volume:
 
-```bash
 docker compose down -v
-```
+Notes on Docker Setup
 
-Notes:
-- The compose file exposes Postgres on port `5432` with credentials `fleet`/`fleetpass` and DB `fleetflow`.
-- If you prefer to run seeds from Node instead of the init SQL file, run `npm run db:seed` after the DB becomes ready.
+The compose file exposes PostgreSQL on port 5432 with credentials:
+
+User: fleet
+
+Password: fleetpass
+
+Database: fleetflow
+
+If I prefer to run seeds from Node instead of using the init SQL file, I can run:
+
+npm run db:seed
+
+after the database becomes ready.

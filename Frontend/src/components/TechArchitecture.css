@@ -1,94 +1,191 @@
 .architecture-section {
     background-color: var(--bg-surface);
     border-bottom: 1px solid var(--border-color);
+    padding: var(--space-8) 0;
+    /* Reduced overall vertical padding to save space */
+    overflow: hidden;
 }
 
 .architecture-section .section-header {
-    margin-bottom: var(--space-8);
-    max-width: 600px;
+    margin-bottom: var(--space-6);
+    max-width: 650px;
     margin-left: auto;
     margin-right: auto;
 }
 
-.arch-diagram {
+.arch-pipeline {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    max-width: 800px;
+    justify-content: center;
+    max-width: 1000px;
     margin: 0 auto;
-}
-
-.arch-layer {
-    width: 100%;
-    background-color: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    padding: var(--space-6);
-    box-shadow: var(--shadow-sm);
-    transition: var(--transition-bounce);
-}
-
-.arch-layer:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-premium);
-    border-color: rgba(37, 99, 235, 0.2);
-}
-
-.layer-header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
     gap: var(--space-2);
-    margin-bottom: var(--space-4);
-    padding-bottom: var(--space-3);
-    border-bottom: 1px dashed var(--border-color);
 }
 
-.layer-header h3 {
-    font-size: 18px;
-    color: var(--text-main);
-    margin: 0;
-}
-
-.layer-blocks {
-    display: flex;
-    justify-content: center;
-    gap: var(--space-4);
-    flex-wrap: wrap;
-}
-
-.arch-block {
-    background-color: var(--bg-surface);
+/* Individual Stack Nodes */
+.arch-node {
+    background: var(--bg-surface);
     border: 1px solid var(--border-color);
-    padding: 12px 20px;
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-    min-width: 220px;
-    text-align: center;
-}
-
-.database-block {
+    border-radius: var(--radius-xl);
+    padding: var(--space-4);
     display: flex;
     flex-direction: column;
-    gap: 4px;
-}
-
-.database-block strong {
-    color: var(--primary);
-    font-size: 15px;
-}
-
-.database-block span {
-    font-size: 12px;
-}
-
-.arch-connector {
-    display: flex;
-    justify-content: center;
     align-items: center;
-    height: 60px;
-    color: var(--border-color);
+    text-align: center;
+    flex: 1;
+    max-width: 280px;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition-bounce);
+    position: relative;
+    z-index: 2;
+}
+
+.arch-node.main-node {
+    box-shadow: var(--shadow-premium);
+    border-color: rgba(16, 185, 129, 0.3);
+    /* Success color hint for middle engine */
+    transform: scale(1.05);
+    /* Make the center engine slightly prominent */
+}
+
+.arch-node:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: var(--shadow-premium);
+}
+
+.arch-node.main-node:hover {
+    transform: translateY(-5px) scale(1.08);
+}
+
+/* Icons */
+.node-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-3);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.blue-glow {
+    box-shadow: 0 0 20px rgba(37, 99, 235, 0.15);
+}
+
+.green-glow {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
+.orange-glow {
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+}
+
+/* Typography */
+.node-title {
+    font-size: 16px;
+    margin-bottom: var(--space-3);
+    color: var(--text-main);
+    font-weight: 700;
+}
+
+/* Compact Pills instead of bulky blocks */
+.node-pills {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.pill {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--bg-primary);
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    transition: var(--transition);
+}
+
+.pill:hover {
+    background: var(--bg-surface-hover);
+    color: var(--primary);
+    border-color: var(--primary-light);
+}
+
+/* Animated Data Flow Connections */
+.arch-connection {
+    flex-grow: 1;
+    max-width: 80px;
+    height: 2px;
+    position: relative;
+    z-index: 1;
+    background-color: var(--border-color);
+}
+
+.data-flow-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    background-size: 200% 100%;
+    animation: dataFlow 2s linear infinite;
+    opacity: 0.6;
+}
+
+@keyframes dataFlow {
+    0% {
+        background-position: 100% 0;
+    }
+
+    100% {
+        background-position: -100% 0;
+    }
+}
+
+/* Responsive Handling */
+@media (max-width: 900px) {
+    .arch-pipeline {
+        flex-direction: column;
+        gap: var(--space-4);
+    }
+
+    .arch-node {
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .arch-node.main-node {
+        transform: scale(1);
+    }
+
+    .arch-node.main-node:hover {
+        transform: scale(1.02) translateY(-4px);
+    }
+
+    .arch-connection {
+        width: 2px;
+        height: 40px;
+        max-width: 2px;
+    }
+
+    .data-flow-line {
+        background: linear-gradient(180deg, transparent, var(--primary), transparent);
+        background-size: 100% 200%;
+        animation: dataFlowVertical 2s linear infinite;
+    }
+
+    @keyframes dataFlowVertical {
+        0% {
+            background-position: 0 100%;
+        }
+
+        100% {
+            background-position: 0 -100%;
+        }
+    }
 }

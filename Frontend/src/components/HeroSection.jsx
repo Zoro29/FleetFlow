@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowRight, Activity, MapPin, Gauge } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import './HeroSection.css';
 
 const HeroSection = () => {

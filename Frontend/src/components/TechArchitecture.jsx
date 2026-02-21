@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layers, Server, Database, ArrowDown } from 'lucide-react';
+import { Layers, Server, Database } from 'lucide-react';
 import './TechArchitecture.css';
 
 const TechArchitecture = () => {
@@ -7,7 +7,7 @@ const TechArchitecture = () => {
         <section className="architecture-section">
             <div className="container">
 
-                <div className="section-header text-center">
+                <div className="section-header text-center animate-fade-in-up">
                     <h2>Enterprise Tech Architecture</h2>
                     <p>
                         Built on a modular, decoupled stack ensuring rapid query performance,
@@ -15,57 +15,54 @@ const TechArchitecture = () => {
                     </p>
                 </div>
 
-                <div className="arch-diagram">
+                <div className="arch-pipeline animate-fade-in-up delay-100">
 
-                    {/* Frontend Layer */}
-                    <div className="arch-layer">
-                        <div className="layer-header">
-                            <Layers size={20} className="text-primary" />
-                            <h3>Frontend: React / Vite</h3>
+                    {/* Node 1: Frontend */}
+                    <div className="arch-node">
+                        <div className="node-icon-wrapper blue-glow">
+                            <Layers size={24} className="text-primary" />
                         </div>
-                        <div className="layer-blocks">
-                            <div className="arch-block">Modular UI Components</div>
-                            <div className="arch-block">Real-Time Data Visualization</div>
-                            <div className="arch-block">Role-Gated Routes</div>
-                        </div>
-                    </div>
-
-                    <div className="arch-connector">
-                        <ArrowDown className="text-tertiary" size={24} />
-                    </div>
-
-                    {/* Backend Layer */}
-                    <div className="arch-layer">
-                        <div className="layer-header">
-                            <Server size={20} className="text-primary" />
-                            <h3>Backend: Node API & State Engine</h3>
-                        </div>
-                        <div className="layer-blocks">
-                            <div className="arch-block">Live Telemetry WebSockets</div>
-                            <div className="arch-block">Validation Middleware</div>
-                            <div className="arch-block">Fleet Authentication Hub</div>
+                        <h3 className="node-title">Frontend Client</h3>
+                        <div className="node-pills">
+                            <span className="pill">React + Vite</span>
+                            <span className="pill">Real-Time UI</span>
+                            <span className="pill">Role-Gated</span>
                         </div>
                     </div>
 
-                    <div className="arch-connector">
-                        <ArrowDown className="text-tertiary" size={24} />
+                    {/* Animated Connecting Arrow */}
+                    <div className="arch-connection">
+                        <div className="data-flow-line"></div>
                     </div>
 
-                    {/* Database Layer */}
-                    <div className="arch-layer">
-                        <div className="layer-header">
-                            <Database size={20} className="text-primary" />
-                            <h3>Data Persistence Layer</h3>
+                    {/* Node 2: Backend */}
+                    <div className="arch-node main-node">
+                        <div className="node-icon-wrapper green-glow">
+                            <Server size={28} className="text-success" />
                         </div>
-                        <div className="layer-blocks">
-                            <div className="arch-block database-block">
-                                <strong>PostgreSQL</strong>
-                                <span>Relational Vehicle & Role Data</span>
-                            </div>
-                            <div className="arch-block database-block">
-                                <strong>Redis</strong>
-                                <span>Live Location Caching</span>
-                            </div>
+                        <h3 className="node-title">API & State Engine</h3>
+                        <div className="node-pills">
+                            <span className="pill">Express REST API</span>
+                            <span className="pill">JWT Authentication</span>
+                            <span className="pill">Dockerized Node</span>
+                        </div>
+                    </div>
+
+                    {/* Animated Connecting Arrow */}
+                    <div className="arch-connection">
+                        <div className="data-flow-line"></div>
+                    </div>
+
+                    {/* Node 3: Database */}
+                    <div className="arch-node">
+                        <div className="node-icon-wrapper orange-glow">
+                            <Database size={24} className="text-warning" />
+                        </div>
+                        <h3 className="node-title">Data Layer</h3>
+                        <div className="node-pills">
+                            <span className="pill">PostgreSQL 16</span>
+                            <span className="pill">pg Node Client</span>
+                            <span className="pill">Automated Seeders</span>
                         </div>
                     </div>
 

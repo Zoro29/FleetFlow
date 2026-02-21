@@ -1,5 +1,6 @@
 import React from 'react';
 import { Truck } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import './Navbar.css';
 
 const Navbar = () => {
@@ -23,8 +24,8 @@ const Navbar = () => {
 
                 {/* Action Buttons */}
                 <div className="navbar-actions">
-                    <button className="btn btn-outline">Login</button>
-                    <button className="btn btn-primary">Request Demo</button>
+                    <Link to="/login" className="btn btn-outline">Log In</Link>
+                    <Link to="/signup" className="btn btn-primary">Sign Up</Link>
                 </div>
             </div>
         </header>

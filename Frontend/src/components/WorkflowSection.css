@@ -1,0 +1,115 @@
+.workflow-section {
+    background-color: var(--bg-primary);
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.workflow-section .section-header {
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.workflow-timeline {
+    position: relative;
+    margin-top: var(--space-8);
+    padding: 0 var(--space-2);
+}
+
+/* Base horizontal line that connects the nodes */
+.timeline-connector {
+    position: absolute;
+    top: 32px;
+    /* Centers roughly on the nodes */
+    left: var(--space-6);
+    right: var(--space-6);
+    height: 2px;
+    background-color: var(--border-color);
+    z-index: 1;
+}
+
+.workflow-nodes {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    position: relative;
+    z-index: 2;
+}
+
+.workflow-node {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s;
+}
+
+.workflow-node:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.node-marker {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background-color: var(--bg-surface);
+    border: 2px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: -48px auto var(--space-3);
+    /* Pull icon up onto connector line */
+}
+
+.role-title {
+    text-align: center;
+    font-size: 16px;
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.role-details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.detail-group {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.detail-group p {
+    font-size: 13px;
+    margin-top: 2px;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .workflow-nodes {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .workflow-node {
+        min-width: 280px;
+        margin-top: var(--space-6);
+        /* Give space for pulled-up icon in grid */
+    }
+
+    .timeline-connector {
+        display: none;
+        /* Hide horizontal line entirely */
+    }
+}

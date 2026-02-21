@@ -1,0 +1,94 @@
+.architecture-section {
+    background-color: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.architecture-section .section-header {
+    margin-bottom: var(--space-8);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.arch-diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.arch-layer {
+    width: 100%;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-bounce);
+}
+
+.arch-layer:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-premium);
+    border-color: rgba(37, 99, 235, 0.2);
+}
+
+.layer-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.layer-header h3 {
+    font-size: 18px;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.layer-blocks {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+}
+
+.arch-block {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    padding: 12px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    min-width: 220px;
+    text-align: center;
+}
+
+.database-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.database-block strong {
+    color: var(--primary);
+    font-size: 15px;
+}
+
+.database-block span {
+    font-size: 12px;
+}
+
+.arch-connector {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 60px;
+    color: var(--border-color);
+}

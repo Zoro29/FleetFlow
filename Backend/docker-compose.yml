@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: fleetflow_db
+    restart: always
+    environment:
+      POSTGRES_USER: fleet
+      POSTGRES_PASSWORD: fleetpass
+      POSTGRES_DB: fleetflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+volumes:
+  pgdata:

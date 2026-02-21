@@ -19,13 +19,13 @@ const HeroSection = () => {
                     </p>
 
                     <div className="hero-actions">
-                        <button className="btn btn-primary btn-lg">
+                        <Link to="/contact-sales" className="btn btn-primary btn-lg" style={{ display: 'inline-flex' }}>
                             Request Live Demo
-                            <ArrowRight size={18} />
-                        </button>
-                        <button className="btn btn-outline btn-lg">
+                            <ArrowRight size={18} style={{ marginLeft: '8px' }} />
+                        </Link>
+                        <Link to="/security" className="btn btn-outline btn-lg" style={{ display: 'inline-flex' }}>
                             View System Architecture
-                        </button>
+                        </Link>
                     </div>
                 </div>
 

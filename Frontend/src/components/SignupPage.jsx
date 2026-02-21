@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Truck, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { Truck, Mail, Lock, User, Briefcase, ArrowRight } from 'lucide-react';
 import './AuthPages.css';
 import { useAppContext } from '../context/AppContext';
 
@@ -85,6 +85,7 @@ const SignupPage = () => {
                     <div className="form-group">
                         <label htmlFor="role">User Type</label>
                         <div className="input-wrapper">
+                            <Briefcase className="input-icon" size={18} />
                             <select id="role" value={role} onChange={(e) => setRole(e.target.value)} className="select-input">
                                 <option value="Fleet Manager">Fleet Manager</option>
                                 <option value="Dispatcher">Dispatcher</option>

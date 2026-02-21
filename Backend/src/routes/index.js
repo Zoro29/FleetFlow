@@ -10,6 +10,7 @@ const router = express.Router();
 // Auth
 router.post('/auth/register', authCtrl.register);
 router.post('/auth/login', authCtrl.login);
+router.post('/auth/check-email', authCtrl.checkEmail);
 
 // Vehicles
 router.post('/vehicles', authGuard, roleGuard('Fleet Manager', 'Dispatcher'), vehicleCtrl.createVehicle);

@@ -4,7 +4,7 @@ import { ArrowRight } from 'lucide-react';
 
 const CtaSection = () => {
     return (
-        <section className="cta-section">
+        <section className="cta-section" id="pricing">
             <div className="container">
                 <div className="cta-content text-center">
                     <h2>Operate Your Fleet with Precision, Not Guesswork.</h2>

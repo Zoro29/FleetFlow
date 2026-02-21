@@ -18,3 +18,8 @@ export async function login({ email, password }) {
   const token = sign({ user_id: user.id, role: user.role });
   return { token, user: { id: user.id, email: user.email, name: user.name, role: user.role } };
 }
+
+export async function checkEmail(email) {
+  const user = await findByEmail(email);
+  return !!user;
+}
